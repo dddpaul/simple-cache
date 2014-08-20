@@ -2,43 +2,35 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class DiskLruCache<K> extends Cache<K, Object>
 {
+    public static <K> String getFileName( K key )
+    {
+        return Integer.toHexString( key.hashCode() );
+    }
+
     private String basePath;
     private LruCache<K, Path> cache;
+
+    public Path getPath( K key )
+    {
+        return Paths.get( basePath, getFileName( key ) );
+    }
 
     public DiskLruCache( int capacity, String path ) throws IOException
     {
         super( capacity );
         basePath = path;
-        cache = createLruCache( capacity, path );
+        cache = LruCache.create( capacity, key -> {
+            try {
+                Files.deleteIfExists( getPath( key ) );
+            } catch( IOException e ) {
+                e.printStackTrace();
+            }
+        });
         Utils.removeRecursive( Paths.get( basePath ) );
         Files.createDirectory( Paths.get( basePath ) );
-    }
-
-    public static <K, V> LruCache<K, V> createLruCache( final int capacity, final String basePath )
-    {
-        final LruCache<K, V> cache = new LruCache<>( capacity );
-        cache.data = new LinkedHashMap<K, V>( capacity, 0.75f, true )
-        {
-            @Override
-            protected boolean removeEldestEntry( Map.Entry eldest )
-            {
-                if( size() > capacity ) {
-                    Path path = Paths.get( basePath, getFileName( eldest.getKey() ) );
-                    try {
-                        Files.deleteIfExists( path );
-                    } catch( IOException e ) {
-                        e.printStackTrace();
-                    }
-                }
-                return size() > capacity;
-            }
-        };
-        return cache;
     }
 
     @Override
@@ -79,10 +71,5 @@ public class DiskLruCache<K> extends Cache<K, Object>
     public boolean containsKey( K key )
     {
         return cache.containsKey( key );
-    }
-
-    public static <K> String getFileName( K key )
-    {
-        return Integer.toHexString( key.hashCode() );
     }
 }
