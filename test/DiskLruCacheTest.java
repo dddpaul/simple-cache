@@ -17,7 +17,7 @@ public class DiskLruCacheTest extends Assert
         final int LRU_INDEX = 2;
         final String BASE_PATH = "/tmp/simple-cache";
 
-        DiskLruCache<Integer> cache = new DiskLruCache<>( CAPACITY, BASE_PATH );
+        DiskLruCache<Integer> cache = DiskLruCache.create( CAPACITY, BASE_PATH );
         for( int i = 0; i < CAPACITY; i++ ) {
             cache.put( i, i );
         }
@@ -25,7 +25,7 @@ public class DiskLruCacheTest extends Assert
         // Call get() on all element except one
         for( int i = 0; i < CAPACITY; i++ ) {
             if( i != LRU_INDEX ) {
-                Path path = Paths.get( BASE_PATH, cache.getFileName( i ) );
+                Path path = Paths.get( BASE_PATH, DiskLruCache.getFileName( i ) );
                 assertTrue( Files.isReadable( path ) );
                 assertThat( cache.get( i ), is( (Object) i ) );
             }
@@ -35,7 +35,7 @@ public class DiskLruCacheTest extends Assert
         int newKey = CAPACITY;
         int newValue = CAPACITY;
         cache.put( newValue, newValue );
-        Path lruPath = Paths.get( BASE_PATH, cache.getFileName( LRU_INDEX ) );
+        Path lruPath = Paths.get( BASE_PATH, DiskLruCache.getFileName( LRU_INDEX ) );
 
         // Last recently used element is removed from cache and from disk
         assertFalse( cache.containsKey( LRU_INDEX ) );

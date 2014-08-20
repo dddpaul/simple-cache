@@ -22,7 +22,7 @@ public class SimpleCache
             parser.printUsage( System.err );
         }
 
-        LruCache<Integer, Object> cache = LruCache.create( options.capacity );
+        MemLruCache<Integer, Object> cache = MemLruCache.create( options.capacity );
         System.out.println( String.format( "Cache is created: capacity = %d", cache.getCapacity() ) );
     }
 }

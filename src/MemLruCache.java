@@ -2,17 +2,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class LruCache<K, V> extends Cache<K, V>
+public class MemLruCache<K, V> extends Cache<K, V>
 {
     /**
-     * Create LRU cache instance based on {@link LinkedHashMap}.
+     * Creates LRU cache instance based on {@link LinkedHashMap}.
      * @see <a href="http://www.javaspecialist.ru/2012/02/java-lru-cache.html">Java LRU cache</a>
      * @param capacity  Cache capacity
      * @param action    Additional action to perform when eldest element is removed from cache
      */
-    public static <K, V> LruCache<K, V> create( final int capacity, Consumer<K> action )
+    public static <K, V> MemLruCache<K, V> create( final int capacity, Consumer<K> action )
     {
-        final LruCache<K, V> cache = new LruCache<>( capacity );
+        MemLruCache<K, V> cache = new MemLruCache<>( capacity );
         cache.data = new LinkedHashMap<K, V>( capacity, 0.75f, true )
         {
             @Override
@@ -27,12 +27,12 @@ public class LruCache<K, V> extends Cache<K, V>
         return cache;
     }
 
-    public static <K, V> LruCache<K, V> create( final int capacity )
+    public static <K, V> MemLruCache<K, V> create( final int capacity )
     {
         return create( capacity, null );
     }
 
-    public LruCache( int capacity )
+    public MemLruCache( int capacity )
     {
         super( capacity );
     }

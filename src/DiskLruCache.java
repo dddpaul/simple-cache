@@ -5,39 +5,50 @@ import java.nio.file.Paths;
 
 public class DiskLruCache<K> extends Cache<K, Object>
 {
+    /**
+     * Creates disk LRU cache instance. This instance uses {@link MemLruCache} to store file names.
+     * @param capacity  Cache capacity
+     * @param basePath  Directory name for storing cached elements
+     */
+    public static <K> DiskLruCache<K> create( int capacity, String basePath ) throws IOException
+    {
+        DiskLruCache<K> cache = new DiskLruCache<>( capacity, basePath );
+        cache.memCache = MemLruCache.create( capacity, key -> {
+            try {
+                Files.deleteIfExists( cache.getPath( key ) );
+            } catch( IOException e ) {
+                e.printStackTrace();
+            }
+        } );
+        Utils.removeRecursive( Paths.get( basePath ) );
+        Files.createDirectory( Paths.get( basePath ) );
+        return cache;
+    }
+
     public static <K> String getFileName( K key )
     {
         return Integer.toHexString( key.hashCode() );
     }
 
     private String basePath;
-    private LruCache<K, Path> cache;
+    private MemLruCache<K, Path> memCache;
+
+    public DiskLruCache( int capacity, String basePath )
+    {
+        super( capacity );
+        this.basePath = basePath;
+    }
 
     public Path getPath( K key )
     {
         return Paths.get( basePath, getFileName( key ) );
     }
 
-    public DiskLruCache( int capacity, String path ) throws IOException
-    {
-        super( capacity );
-        basePath = path;
-        cache = LruCache.create( capacity, key -> {
-            try {
-                Files.deleteIfExists( getPath( key ) );
-            } catch( IOException e ) {
-                e.printStackTrace();
-            }
-        });
-        Utils.removeRecursive( Paths.get( basePath ) );
-        Files.createDirectory( Paths.get( basePath ) );
-    }
-
     @Override
     public Object get( K key )
     {
         Object result = null;
-        Path path = cache.get( key );
+        Path path = memCache.get( key );
         if( Files.isReadable( path )) {
             try {
                 byte[] buf = Files.readAllBytes( path );
@@ -59,7 +70,7 @@ public class DiskLruCache<K> extends Cache<K, Object>
             ObjectOutputStream out = new ObjectOutputStream( file );
             out.writeObject( val );
             out.close();
-            cache.put( key, path );
+            memCache.put( key, path );
             return val;
         } catch( IOException e ) {
             e.printStackTrace();
@@ -70,6 +81,6 @@ public class DiskLruCache<K> extends Cache<K, Object>
     @Override
     public boolean containsKey( K key )
     {
-        return cache.containsKey( key );
+        return memCache.containsKey( key );
     }
 }

@@ -3,7 +3,7 @@ import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;
 
-public class LruCacheTest extends Assert
+public class MemLruCacheTest extends Assert
 {
     @Test
     public void testLastRecentlyUsedRemove()
@@ -11,7 +11,7 @@ public class LruCacheTest extends Assert
         final int CAPACITY = 4;
         final int LRU_INDEX = 2;
 
-        LruCache<Integer, Object> cache = LruCache.create( CAPACITY );
+        MemLruCache<Integer, Object> cache = MemLruCache.create( CAPACITY );
         for( int i = 0; i < CAPACITY; i++ ) {
             cache.put( i, i );
         }
