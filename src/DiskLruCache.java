@@ -20,8 +20,11 @@ public class DiskLruCache<K> extends Cache<K, Object>
                 e.printStackTrace();
             }
         } );
-        Utils.removeRecursive( Paths.get( basePath ) );
-        Files.createDirectory( Paths.get( basePath ) );
+        Path path = Paths.get( basePath );
+        if( Files.exists( path )) {
+            Utils.removeRecursive( path );
+        }
+        Files.createDirectory( path );
         return cache;
     }
 
@@ -46,6 +49,12 @@ public class DiskLruCache<K> extends Cache<K, Object>
     public Path getPath( K key )
     {
         return Paths.get( basePath, getFileName( key ) );
+    }
+
+    @Override
+    public int getSize()
+    {
+        return memCache.getSize();
     }
 
     @Override

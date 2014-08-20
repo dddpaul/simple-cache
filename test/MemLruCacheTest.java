@@ -1,20 +1,24 @@
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;
 
-public class MemLruCacheTest extends Assert
+public class MemLruCacheTest extends CacheTest
 {
+    public static final int CAPACITY = 4;
+
+    @Before
+    public void setUp()
+    {
+        cache = MemLruCache.create( CAPACITY );
+    }
+
     @Test
     public void testLastRecentlyUsedRemove()
     {
-        final int CAPACITY = 4;
         final int LRU_INDEX = 2;
 
-        MemLruCache<Integer, Object> cache = MemLruCache.create( CAPACITY );
-        for( int i = 0; i < CAPACITY; i++ ) {
-            cache.put( i, i );
-        }
+        fillCache();
 
         // Call get() on all element except one
         for( int i = 0; i < CAPACITY; i++ ) {
@@ -24,10 +28,7 @@ public class MemLruCacheTest extends Assert
         }
 
         // Add new object to cache
-        int newKey = CAPACITY + 1;
-        int newValue = CAPACITY + 1;
-        cache.put( newKey, newValue );
-        assertThat( cache.get( newKey ), is( (Object) newValue ) );
+        putToCache( 99999, new byte[1024] );
 
         // Last recently used element is removed from cache
         assertFalse( cache.containsKey( LRU_INDEX ) );

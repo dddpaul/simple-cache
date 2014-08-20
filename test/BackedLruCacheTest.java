@@ -1,4 +1,4 @@
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -8,17 +8,23 @@ import java.nio.file.Paths;
 
 import static org.hamcrest.core.Is.is;
 
-public class BackedLruCacheTest extends Assert
+public class BackedLruCacheTest extends CacheTest
 {
+    public static final int CAPACITY1 = 4;
+    public static final int CAPACITY2 = 8;
+    public static final String BASE_PATH = "/tmp/simple-cache";
+
+    @Before
+    public void setUp() throws IOException
+    {
+        cache = BackedLruCache.create( CAPACITY1, CAPACITY2, BASE_PATH );
+        assertThat( cache.getCapacity(), is( CAPACITY1 + CAPACITY2 ) );
+    }
+
     @Test
     public void testLastRecentlyUsedRemove() throws IOException
     {
-        final int CAPACITY1 = 4;
-        final int CAPACITY2 = 8;
         final int LRU_INDEX = 2;
-
-        BackedLruCache<Integer> cache = BackedLruCache.create( CAPACITY1, CAPACITY2, DiskLruCacheTest.BASE_PATH );
-        assertThat( cache.getCapacity(), is( CAPACITY1 + CAPACITY2 ) );
 
         // Fill level-1 cache
         for( int i = 0; i < CAPACITY1; i++ ) {
@@ -33,10 +39,7 @@ public class BackedLruCacheTest extends Assert
         }
 
         // Add new object to cache
-        int newKey = CAPACITY1;
-        int newValue = CAPACITY1;
-        cache.put( newKey, newValue );
-        assertThat( cache.get( newKey ), is( (Object) newValue ) );
+        putToCache( 99991, new byte[1024] );
 
         // Last recently used element from level-1 is still accessible on level-2
         Path lruPath = Paths.get( DiskLruCacheTest.BASE_PATH, DiskLruCache.getFileName( LRU_INDEX ) );

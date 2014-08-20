@@ -15,6 +15,11 @@ public abstract class Cache<K, V>
         return capacity;
     }
 
+    public int getSize()
+    {
+        return data.size();
+    }
+
     public V get( K key )
     {
         return data.get( key );

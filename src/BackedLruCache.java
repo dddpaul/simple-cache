@@ -26,6 +26,12 @@ public class BackedLruCache<K> extends Cache<K, Object>
     }
 
     @Override
+    public int getSize()
+    {
+        return frontCache.getSize() + backingCache.getSize();
+    }
+
+    @Override
     public Object get( K key )
     {
         Object val = frontCache.get( key );
