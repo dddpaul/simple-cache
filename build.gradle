@@ -1,0 +1,19 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = 1.7
+version = '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main.java.srcDirs = ['src']
+    test.java.srcDirs = ['test']
+}
+
+dependencies {
+    compile 'args4j:args4j:2.0.29'
+    testCompile 'junit:junit:4.11'
+}

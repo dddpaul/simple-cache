@@ -1,0 +1,10 @@
+.gradle
+build
+gradle.properties
+local.properties
+
+# IDEA project settings
+.idea
+*.ipr
+*.iws
+*.iml
