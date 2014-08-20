@@ -26,10 +26,10 @@ public class MemLruCacheTest extends Assert
         // Add new object to cache
         int newKey = CAPACITY + 1;
         int newValue = CAPACITY + 1;
-        cache.put( newValue, newValue );
+        cache.put( newKey, newValue );
+        assertThat( cache.get( newKey ), is( (Object) newValue ) );
 
         // Last recently used element is removed from cache
         assertFalse( cache.containsKey( LRU_INDEX ) );
-        assertThat( cache.get( newKey ), is( (Object) newValue ) );
     }
 }

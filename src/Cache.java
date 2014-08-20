@@ -25,6 +25,11 @@ public abstract class Cache<K, V>
         return data.put( key, val );
     }
 
+    public V remove( K key )
+    {
+        return data.remove( key );
+    }
+
     public boolean containsKey( K key )
     {
         return data.containsKey( key );

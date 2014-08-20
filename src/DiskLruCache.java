@@ -25,6 +25,10 @@ public class DiskLruCache<K> extends Cache<K, Object>
         return cache;
     }
 
+    /**
+     * Describes rule for key-to-filename conversion
+     * TODO: Get rid of hashCode because of collision probability.
+     */
     public static <K> String getFileName( K key )
     {
         return Integer.toHexString( key.hashCode() );

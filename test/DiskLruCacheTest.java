@@ -10,12 +10,13 @@ import static org.hamcrest.core.Is.is;
 
 public class DiskLruCacheTest extends Assert
 {
+    public static final String BASE_PATH = "/tmp/simple-cache";
+
     @Test
     public void testLastRecentlyUsedRemove() throws IOException
     {
         final int CAPACITY = 4;
         final int LRU_INDEX = 2;
-        final String BASE_PATH = "/tmp/simple-cache";
 
         DiskLruCache<Integer> cache = DiskLruCache.create( CAPACITY, BASE_PATH );
         for( int i = 0; i < CAPACITY; i++ ) {
@@ -34,12 +35,12 @@ public class DiskLruCacheTest extends Assert
         // Add new object to cache
         int newKey = CAPACITY;
         int newValue = CAPACITY;
-        cache.put( newValue, newValue );
-        Path lruPath = Paths.get( BASE_PATH, DiskLruCache.getFileName( LRU_INDEX ) );
+        cache.put( newKey, newValue );
+        assertThat( cache.get( newKey ), is( (Object) newValue ) );
 
         // Last recently used element is removed from cache and from disk
+        Path lruPath = Paths.get( BASE_PATH, DiskLruCache.getFileName( LRU_INDEX ) );
         assertFalse( cache.containsKey( LRU_INDEX ) );
         assertFalse( Files.exists( lruPath ) );
-        assertThat( cache.get( newKey ), is( (Object) newValue ) );
     }
 }
