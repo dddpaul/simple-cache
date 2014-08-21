@@ -2,21 +2,23 @@ import org.junit.Assert;
 
 import static org.hamcrest.core.Is.is;
 
-public class CacheTest extends Assert
+public abstract class CacheTest extends Assert
 {
-    protected Cache<Integer, Object> cache;
+    public abstract Cache getCache();
 
+    @SuppressWarnings( "unchecked" )
     public void fillCache()
     {
-        for( int i = 0; i < cache.getCapacity(); i++ ) {
-            cache.put( i, i );
+        for( int i = 0; i < getCache().getCapacity(); i++ ) {
+            getCache().put( i, i );
         }
-        assertThat( cache.getSize(), is( cache.getCapacity() ) );
+        assertThat( getCache().getSize(), is( getCache().getCapacity() ) );
     }
 
+    @SuppressWarnings( "unchecked" )
     public void putToCache( Integer key, Object val )
     {
-        cache.put( key, val );
-        assertThat( cache.get( key ), is( val ) );
+        getCache().put( key, val );
+        assertThat( getCache().get( key ), is( val ) );
     }
 }

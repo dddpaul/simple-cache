@@ -4,24 +4,38 @@ import static org.hamcrest.core.Is.is;
 
 public class MemCacheTest extends CacheTest
 {
-    public static final int CAPACITY = 4;
+    public static final int CAPACITY = 8;
+
+    private MemCache<Integer, Object> cache;
 
     @Test
     public void testCapacity()
     {
         cache = MemCache.create( Cache.Strategy.LRU, CAPACITY );
         fillCache();
+
         putToCache( 9998, "New element" );
         putToCache( 9999, new byte[1024] );
         assertThat( cache.getSize(), is( cache.getCapacity() ));
     }
 
     @Test
+    public void testRemove()
+    {
+        final int REMOVE_INDEX = 5;
+        cache = MemCache.create( Cache.Strategy.LRU, CAPACITY );
+        fillCache();
+
+        assertNotNull( cache.get( REMOVE_INDEX ) );
+        cache.remove( REMOVE_INDEX );
+        assertNull( cache.get( REMOVE_INDEX ) );
+    }
+
+    @Test
     public void testLastRecentlyUsedRemove()
     {
-        cache = MemCache.create( Cache.Strategy.LRU, CAPACITY );
         final int LRU_INDEX = 2;
-
+        cache = MemCache.create( Cache.Strategy.LRU, CAPACITY );
         fillCache();
 
         // Call get() on all element except one
@@ -41,9 +55,8 @@ public class MemCacheTest extends CacheTest
     @Test
     public void testMostRecentlyUsedRemove()
     {
-        cache = MemCache.create( Cache.Strategy.MRU, CAPACITY );
         final int MRU_INDEX = 2;
-
+        cache = MemCache.create( Cache.Strategy.MRU, CAPACITY );
         fillCache();
 
         // Call get() on one element
@@ -54,5 +67,11 @@ public class MemCacheTest extends CacheTest
 
         // Most recently used element is removed from cache
         assertFalse( cache.containsKey( MRU_INDEX ) );
+    }
+
+    @Override
+    public Cache getCache()
+    {
+        return cache;
     }
 }

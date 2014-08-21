@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 
 public class BackedCache<K> implements Cache<K, Object>
@@ -10,9 +11,10 @@ public class BackedCache<K> implements Cache<K, Object>
 
     /**
      * Creates two-level cache instance. First level is memory, second is disk.
+     *
      * @param strategy  Cache strategy
-     * @param capacity1  Level-1 cache capacity
-     * @param capacity2  Level-2 cache capacity
+     * @param capacity1 Level-1 cache capacity
+     * @param capacity2 Level-2 cache capacity
      * @param basePath  Directory name for storing cached elements
      */
     public static <K> BackedCache<K> create( Strategy strategy, final int capacity1, int capacity2, String basePath )
@@ -47,6 +49,11 @@ public class BackedCache<K> implements Cache<K, Object>
     {
         this.strategy = strategy;
         this.capacity = capacity;
+    }
+
+    public Path getPath( K key )
+    {
+        return backingCache.getPath( key );
     }
 
     @Override

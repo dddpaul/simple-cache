@@ -3,7 +3,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.hamcrest.core.Is.is;
 
@@ -12,6 +11,8 @@ public class BackedCacheTest extends CacheTest
     public static final int CAPACITY1 = 8;
     public static final int CAPACITY2 = 16;
     public static final String BASE_PATH = "/tmp/simple-cache";
+
+    private BackedCache<Integer> cache;
 
     @Test
     public void testCapacity() throws IOException
@@ -22,6 +23,37 @@ public class BackedCacheTest extends CacheTest
         putToCache( 9998, "New element" );
         putToCache( 9999, new byte[1024] );
         assertThat( cache.getSize(), is( cache.getCapacity() ));
+    }
+
+    @Test
+    public void testRemove() throws IOException
+    {
+        final int REMOVE_INDEX = CAPACITY2 - 1; // In level-2 cache after fillCache()
+        cache = BackedCache.create( Cache.Strategy.LRU, CAPACITY1, CAPACITY2, BASE_PATH );
+        fillCache();
+
+        Path path = cache.getPath( REMOVE_INDEX );
+        assertTrue( Files.isReadable( path ) );
+
+        cache.remove( REMOVE_INDEX );
+        assertNull( cache.get( REMOVE_INDEX ) );
+        assertFalse( Files.exists( path ) );
+    }
+
+    @Test
+    public void testMoveForward() throws IOException
+    {
+        final int INDEX = CAPACITY2 - 1; // In level-2 cache after fillCache()
+        cache = BackedCache.create( Cache.Strategy.LRU, CAPACITY1, CAPACITY2, BASE_PATH );
+        fillCache();
+
+        Path path = cache.getPath( INDEX );
+        assertTrue( Files.isReadable( path ) );
+
+        // Read element from cache must be moved to level-1 cache, file must be removed
+        assertNotNull( cache.get( INDEX ) );
+        assertFalse( Files.exists( path ) );
+        assertNotNull( cache.get( INDEX ) );
     }
 
     @Test
@@ -46,7 +78,7 @@ public class BackedCacheTest extends CacheTest
         putToCache( 99991, new byte[1024] );
 
         // Last recently used element from level-1 is still accessible on level-2
-        Path path = Paths.get( BASE_PATH, DiskCache.getFileName( LRU_INDEX ) );
+        Path path = cache.getPath( LRU_INDEX );
         assertTrue( cache.containsKey( LRU_INDEX ) );
         assertTrue( Files.exists( path ) );
     }
@@ -69,8 +101,14 @@ public class BackedCacheTest extends CacheTest
         putToCache( 99991, new byte[1024] );
 
         // Most recently used element from level-1 is still accessible on level-2
-        Path path = Paths.get( BASE_PATH, DiskCache.getFileName( MRU_INDEX ) );
+        Path path = cache.getPath( MRU_INDEX );
         assertTrue( cache.containsKey( MRU_INDEX ) );
         assertTrue( Files.exists( path ) );
+    }
+
+    @Override
+    public Cache getCache()
+    {
+        return cache;
     }
 }
