@@ -2,25 +2,57 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
+import java.util.Map;
 
-@Deprecated
-public class DiskLruCache<K> extends Cache<K, Object>
+public class DiskCache<K> extends Cache<K, Object>
 {
     /**
-     * Creates disk LRU cache instance. This instance uses {@link MemLruCache} to store file names.
+     * Creates disk cache instance. This instance uses {@link MemLruCache} to store file names.
+     * @param strategy  Cache strategy
      * @param capacity  Cache capacity
      * @param basePath  Directory name for storing cached elements
      */
-    public static <K> DiskLruCache<K> create( int capacity, String basePath ) throws IOException
+    public static <K> DiskCache<K> create( Cache.Strategy strategy, int capacity, String basePath ) throws IOException
     {
-        DiskLruCache<K> cache = new DiskLruCache<>( capacity, basePath );
-        cache.memCache = MemLruCache.create( capacity, key -> {
-            try {
-                Files.deleteIfExists( cache.getPath( key ) );
-            } catch( IOException e ) {
-                e.printStackTrace();
+        DiskCache<K> cache = new DiskCache<>( capacity, basePath );
+        cache.memCache = new MemCache<K, Path>( capacity )
+        {
+            @Override
+            public boolean removeEldestEntryImpl( Map<K, Path> data, Map.Entry<K, Path> eldest, Strategy strategy )
+            {
+                switch( strategy ) {
+                    case LRU:
+                        if( getSize() > capacity ) {
+                            try {
+                                Files.deleteIfExists( cache.getPath( eldest.getKey() ) );
+                            } catch( IOException e ) {
+                                e.printStackTrace();
+                            }
+                        }
+                        break;
+                    case MRU:
+                        if( getSize() > capacity ) {
+                            // Remove next to last element because it was most recently used
+                            Iterator<K> it = data.keySet().iterator();
+                            K key = null;
+                            for( int i = 0; i < data.size() - 1; i++ ) {
+                                 key = it.next();
+                            }
+                            it.remove();
+                            try {
+                                Files.deleteIfExists( cache.getPath( key ) );
+                            } catch( IOException e ) {
+                                e.printStackTrace();
+                            }
+                            return false;
+                        }
+                        break;
+                }
+                return getSize() > capacity;
             }
-        } );
+        };
+        cache.memCache.createData( strategy );
         Path path = Paths.get( basePath );
         if( Files.exists( path )) {
             Utils.removeRecursive( path );
@@ -39,9 +71,9 @@ public class DiskLruCache<K> extends Cache<K, Object>
     }
 
     private String basePath;
-    private MemLruCache<K, Path> memCache;
+    private MemCache<K, Path> memCache;
 
-    public DiskLruCache( int capacity, String basePath )
+    public DiskCache( int capacity, String basePath )
     {
         super( capacity );
         this.basePath = basePath;

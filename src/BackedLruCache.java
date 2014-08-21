@@ -1,5 +1,6 @@
 import java.io.IOException;
 
+@Deprecated
 public class BackedLruCache<K> extends Cache<K, Object>
 {
     /**
