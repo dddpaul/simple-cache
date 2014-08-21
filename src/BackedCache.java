@@ -1,9 +1,11 @@
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
 
 public class BackedCache<K> extends Cache<K, Object>
 {
+    private MemCache<K, Object> frontCache;
+    private DiskCache<K> backingCache;
+
     /**
      * Creates two-level cache instance. First level is memory, second is disk.
      * @param strategy  Cache strategy
@@ -15,39 +17,27 @@ public class BackedCache<K> extends Cache<K, Object>
     {
         BackedCache<K> cache = new BackedCache<>( capacity1 + capacity2 );
         cache.backingCache = DiskCache.create( strategy, capacity2, basePath );
-        cache.frontCache = new MemCache<K, Object>( capacity1 )
+        cache.frontCache = new MemCache<K, Object>( strategy, capacity1 )
         {
             @Override
-            public boolean removeEldestEntryImpl( Map<K, Object> data, Map.Entry<K, Object> eldest, Strategy strategy )
+            public boolean removeEldestEntryImpl( Map.Entry<K, Object> eldest, Strategy strategy )
             {
-                switch( strategy ) {
-                    case LRU:
-                        if( getSize() > capacity ) {
-                            cache.backingCache.put( eldest.getKey(), eldest.getValue() );
-                        }
-                        break;
-                    case MRU:
-                        if( getSize() > capacity ) {
-                            cache.backingCache.put( eldest.getKey(), eldest );
-                            // Remove next to last element because it was most recently used
-                            Iterator<K> it = data.keySet().iterator();
-                            for( int i = 0; i < data.size() - 1; i++ ) {
-                                it.next();
-                            }
-                            it.remove();
+                if( getSize() > capacity ) {
+                    switch( strategy ) {
+                        case LRU:
+                            cache.moveBackward( eldest.getKey() );
+                            return true;
+                        case MRU:
+                            K key = removeMostRecentlyUsedElement();
+                            cache.moveBackward( key );
                             return false;
-                        }
-                        break;
+                    }
                 }
-                return getSize() > capacity;
+                return false;
             }
         };
-        cache.frontCache.createData( strategy );
         return cache;
     }
-
-    private MemCache<K, Object> frontCache;
-    private DiskCache<K> backingCache;
 
     public BackedCache( int capacity )
     {
@@ -89,5 +79,10 @@ public class BackedCache<K> extends Cache<K, Object>
     {
         frontCache.put( key, val );
         backingCache.remove( key );
+    }
+
+    private void moveBackward( K key )
+    {
+        backingCache.put( key, get( key ) );
     }
 }

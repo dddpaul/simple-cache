@@ -2,59 +2,44 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
 import java.util.Map;
 
 public class DiskCache<K> extends Cache<K, Object>
 {
+    private String basePath;
+    private MemCache<K, Path> memCache;
+
     /**
-     * Creates disk cache instance. This instance uses {@link MemLruCache} to store file names.
-     * @param strategy  Cache strategy
-     * @param capacity  Cache capacity
-     * @param basePath  Directory name for storing cached elements
+     * Creates disk cache instance. This instance uses {@link MemCache} to store file names.
+     *
+     * @param strategy Cache strategy
+     * @param capacity Cache capacity
+     * @param basePath Directory name for storing cached elements
      */
     public static <K> DiskCache<K> create( Cache.Strategy strategy, int capacity, String basePath ) throws IOException
     {
         DiskCache<K> cache = new DiskCache<>( capacity, basePath );
-        cache.memCache = new MemCache<K, Path>( capacity )
+        cache.memCache = new MemCache<K, Path>( strategy, capacity )
         {
             @Override
-            public boolean removeEldestEntryImpl( Map<K, Path> data, Map.Entry<K, Path> eldest, Strategy strategy )
+            public boolean removeEldestEntryImpl( Map.Entry<K, Path> eldest, Strategy strategy )
             {
-                switch( strategy ) {
-                    case LRU:
-                        if( getSize() > capacity ) {
-                            try {
-                                Files.deleteIfExists( cache.getPath( eldest.getKey() ) );
-                            } catch( IOException e ) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    case MRU:
-                        if( getSize() > capacity ) {
-                            // Remove next to last element because it was most recently used
-                            Iterator<K> it = data.keySet().iterator();
-                            K key = null;
-                            for( int i = 0; i < data.size() - 1; i++ ) {
-                                 key = it.next();
-                            }
-                            it.remove();
-                            try {
-                                Files.deleteIfExists( cache.getPath( key ) );
-                            } catch( IOException e ) {
-                                e.printStackTrace();
-                            }
+                if( getSize() > capacity ) {
+                    switch( strategy ) {
+                        case LRU:
+                            cache.removeFile( eldest.getKey() );
+                            return true;
+                        case MRU:
+                            K key = removeMostRecentlyUsedElement();
+                            cache.removeFile( key );
                             return false;
-                        }
-                        break;
+                    }
                 }
-                return getSize() > capacity;
+                return false;
             }
         };
-        cache.memCache.createData( strategy );
         Path path = Paths.get( basePath );
-        if( Files.exists( path )) {
+        if( Files.exists( path ) ) {
             Utils.removeRecursive( path );
         }
         Files.createDirectory( path );
@@ -69,9 +54,6 @@ public class DiskCache<K> extends Cache<K, Object>
     {
         return Integer.toHexString( key.hashCode() );
     }
-
-    private String basePath;
-    private MemCache<K, Path> memCache;
 
     public DiskCache( int capacity, String basePath )
     {
@@ -95,7 +77,7 @@ public class DiskCache<K> extends Cache<K, Object>
     {
         Object result = null;
         Path path = memCache.get( key );
-        if( Files.isReadable( path )) {
+        if( path != null && Files.isReadable( path ) ) {
             try {
                 byte[] buf = Files.readAllBytes( path );
                 ObjectInputStream in = new ObjectInputStream( new ByteArrayInputStream( buf ) );
@@ -110,7 +92,7 @@ public class DiskCache<K> extends Cache<K, Object>
     @Override
     public Object put( K key, Object val )
     {
-        Path path = Paths.get( basePath, getFileName( key ));
+        Path path = Paths.get( basePath, getFileName( key ) );
         try {
             FileOutputStream file = new FileOutputStream( path.toFile() );
             ObjectOutputStream out = new ObjectOutputStream( file );
@@ -128,5 +110,14 @@ public class DiskCache<K> extends Cache<K, Object>
     public boolean containsKey( K key )
     {
         return memCache.containsKey( key );
+    }
+
+    private void removeFile( K key )
+    {
+        try {
+            Files.deleteIfExists( getPath( key ) );
+        } catch( IOException e ) {
+            e.printStackTrace();
+        }
     }
 }

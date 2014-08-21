@@ -1,4 +1,3 @@
-import java.util.Iterator;
 import java.util.Map;
 
 public abstract class Cache<K, V>
@@ -44,10 +43,5 @@ public abstract class Cache<K, V>
     public boolean containsKey( K key )
     {
         return data.containsKey( key );
-    }
-
-    public boolean removeEldestEntryImpl( Map<K, V> data, Map.Entry<K, V> eldest, Cache.Strategy strategy )
-    {
-        return false;
     }
 }

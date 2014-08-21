@@ -4,54 +4,69 @@ import java.util.Map;
 
 public class MemCache<K, V> extends Cache<K, V>
 {
-    public MemCache( int capacity )
-    {
-        super( capacity );
-    }
-
     /**
      * Creates LRU/MRU cache instance based on {@link LinkedHashMap}.
+     *
+     * @param strategy Cache strategy
+     * @param capacity Cache capacity
      * @see <a href="http://www.javaspecialist.ru/2012/02/java-lru-cache.html">Java LRU cache</a>
-     * @param strategy  Cache strategy
-     * @param capacity  Cache capacity
      */
-    public static <K, V> MemCache<K, V> create( Cache.Strategy strategy, final int capacity )
+    public static <K, V> MemCache<K, V> create( Cache.Strategy strategy, int capacity )
     {
-        MemCache<K, V> cache = new MemCache<>( capacity );
-        cache.createData( strategy );
-        return cache;
+        return new MemCache<>( strategy, capacity );
     }
 
-    public void createData( Cache.Strategy strategy )
+    public MemCache( Cache.Strategy strategy, int capacity )
     {
-        data = new LinkedHashMap<K, V>( capacity, 0.75f, true )
+        super( capacity );
+        data = new LinkedHashMap<K, V>( capacity, 1, true )
         {
             @Override
             protected boolean removeEldestEntry( Map.Entry<K, V> eldest )
             {
-                return removeEldestEntryImpl( data, eldest, strategy );
+                return removeEldestEntryImpl( eldest, strategy );
             }
         };
     }
 
-    @Override
-    public boolean removeEldestEntryImpl( Map<K, V> data, Map.Entry<K, V> eldest, Cache.Strategy strategy )
+    /**
+     * Implementation of {@link LinkedHashMap#removeEldestEntry} method.
+     * LRU strategy is maintained by {@link LinkedHashMap} itself.
+     * MRU strategy demands to remove most recently used element explicitly.
+     *
+     * @param eldest   The least recently inserted element, has no use for MRU strategy
+     * @param strategy Cache strategy
+     * @return <tt>true</tt> if the eldest entry should be removed from the map by {@link LinkedHashMap}
+     */
+    public boolean removeEldestEntryImpl( Map.Entry<K, V> eldest, Cache.Strategy strategy )
     {
-        switch( strategy ) {
-            case LRU:
-                break;
-            case MRU:
-                if( getSize() > capacity ) {
-                    // Remove next to last element because it was most recently used
-                    Iterator it = data.entrySet().iterator();
-                    for( int i = 0; i < data.size() - 1; i++ ) {
-                        it.next();
-                    }
-                    it.remove();
+        if( getSize() > capacity ) {
+            switch( strategy ) {
+                case LRU:
+                    return true;
+                case MRU:
+                    removeMostRecentlyUsedElement();
                     return false;
-                }
-                break;
+            }
         }
-        return getSize() > capacity;
+        return false;
+    }
+
+    /**
+     * Removes NEXT TO LAST element from cache. Should be invoked from {@link #removeEldestEntryImpl} then:
+     * - the new just inserted element is the last;
+     * - the next to last is the most recent used element.
+     *
+     * @return Key of element to remove
+     */
+    public K removeMostRecentlyUsedElement()
+    {
+        K key = null;
+        Iterator<K> it = data.keySet().iterator();
+        for( int i = 0; i < data.size() - 1; i++ ) {
+            key = it.next();
+        }
+        it.remove();
+        return key;
     }
 }

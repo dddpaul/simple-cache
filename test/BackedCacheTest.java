@@ -9,8 +9,8 @@ import static org.hamcrest.core.Is.is;
 
 public class BackedCacheTest extends CacheTest
 {
-    public static final int CAPACITY1 = 4;
-    public static final int CAPACITY2 = 8;
+    public static final int CAPACITY1 = 8;
+    public static final int CAPACITY2 = 16;
     public static final String BASE_PATH = "/tmp/simple-cache";
 
     @Test
@@ -46,8 +46,31 @@ public class BackedCacheTest extends CacheTest
         putToCache( 99991, new byte[1024] );
 
         // Last recently used element from level-1 is still accessible on level-2
-        Path lruPath = Paths.get( DiskCacheTest.BASE_PATH, DiskLruCache.getFileName( LRU_INDEX ) );
+        Path path = Paths.get( BASE_PATH, DiskCache.getFileName( LRU_INDEX ) );
         assertTrue( cache.containsKey( LRU_INDEX ) );
-        assertTrue( Files.exists( lruPath ) );
+        assertTrue( Files.exists( path ) );
+    }
+
+    @Test
+    public void testMostRecentlyUsedRemove() throws IOException
+    {
+        cache = BackedCache.create( Cache.Strategy.MRU, CAPACITY1, CAPACITY2, BASE_PATH );
+        final int MRU_INDEX = 5;
+
+        // Fill level-1 cache
+        for( int i = 0; i < CAPACITY1; i++ ) {
+            cache.put( i, i );
+        }
+
+        // Call get() on one element
+        assertThat( cache.get( MRU_INDEX ), is( (Object) MRU_INDEX ) );
+
+        // Add new object to cache
+        putToCache( 99991, new byte[1024] );
+
+        // Most recently used element from level-1 is still accessible on level-2
+        Path path = Paths.get( BASE_PATH, DiskCache.getFileName( MRU_INDEX ) );
+        assertTrue( cache.containsKey( MRU_INDEX ) );
+        assertTrue( Files.exists( path ) );
     }
 }
