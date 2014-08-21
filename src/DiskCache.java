@@ -50,10 +50,12 @@ public class DiskCache<K> implements Cache<K, Object>
 
     /**
      * Describes rule for key-to-filename conversion
-     * TODO: Get rid of hashCode because of collision probability.
      */
     public static <K> String getFileName( K key )
     {
+        if( key instanceof String ) {
+            return key.toString();
+        }
         return Integer.toHexString( key.hashCode() );
     }
 
