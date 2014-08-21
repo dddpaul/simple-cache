@@ -6,7 +6,12 @@ Simple two-level cache written in Java.
 It's not thread-safe, it hasn't got outstanding performance or smallest memory usage.
 Anyway it's just a sample bunch of classes.
 
-See [SampleApp](blob/master/src/SampleApp.java) for usage example. 
+Features:
+* level-1 cache uses memory, level-2 cache uses disk (filesystem); 
+* LRU/MRU strategies are implemented;
+* no third-party libraries are used for cache implementation. 
+
+See [SampleApp](src/SampleApp.java) for usage example. 
 
 Build sample application:
 ```
