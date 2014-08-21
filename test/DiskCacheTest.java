@@ -33,7 +33,7 @@ public class DiskCacheTest extends CacheTest
         // Call get() on all element except one
         for( int i = 0; i < CAPACITY; i++ ) {
             if( i != LRU_INDEX ) {
-                Path path = Paths.get( BASE_PATH, DiskLruCache.getFileName( i ) );
+                Path path = ( (DiskCache<Integer>) cache ).getPath( i );
                 assertTrue( Files.isReadable( path ) );
                 assertThat( cache.get( i ), is( (Object) i ) );
             }

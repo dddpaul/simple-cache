@@ -1,8 +1,10 @@
 import java.io.IOException;
 import java.util.Map;
 
-public class BackedCache<K> extends Cache<K, Object>
+public class BackedCache<K> implements Cache<K, Object>
 {
+    private Strategy strategy;
+    private int capacity;
     private MemCache<K, Object> frontCache;
     private DiskCache<K> backingCache;
 
@@ -13,16 +15,17 @@ public class BackedCache<K> extends Cache<K, Object>
      * @param capacity2  Level-2 cache capacity
      * @param basePath  Directory name for storing cached elements
      */
-    public static <K> BackedCache<K> create( Cache.Strategy strategy, int capacity1, int capacity2, String basePath ) throws IOException
+    public static <K> BackedCache<K> create( Strategy strategy, int capacity1, int capacity2, String basePath ) throws IOException
     {
-        BackedCache<K> cache = new BackedCache<>( capacity1 + capacity2 );
+        int capacity = capacity1 + capacity2;
+        BackedCache<K> cache = new BackedCache<>( strategy, capacity );
         cache.backingCache = DiskCache.create( strategy, capacity2, basePath );
         cache.frontCache = new MemCache<K, Object>( strategy, capacity1 )
         {
             @Override
             public boolean removeEldestEntryImpl( Map.Entry<K, Object> eldest, Strategy strategy )
             {
-                if( getSize() > capacity ) {
+                if( cache.frontCache.getSize() > capacity1 ) {
                     switch( strategy ) {
                         case LRU:
                             cache.moveBackward( eldest.getKey() );
@@ -39,9 +42,22 @@ public class BackedCache<K> extends Cache<K, Object>
         return cache;
     }
 
-    public BackedCache( int capacity )
+    public BackedCache( Strategy strategy, int capacity )
     {
-        super( capacity );
+        this.strategy = strategy;
+        this.capacity = capacity;
+    }
+
+    @Override
+    public Strategy getStrategy()
+    {
+        return strategy;
+    }
+
+    @Override
+    public int getCapacity()
+    {
+        return capacity;
     }
 
     @Override
@@ -67,6 +83,12 @@ public class BackedCache<K> extends Cache<K, Object>
     public Object put( K key, Object val )
     {
         return frontCache.put( key, val );
+    }
+
+    @Override
+    public boolean remove( K key )
+    {
+        return frontCache.remove( key ) || backingCache.remove( key );
     }
 
     @Override

@@ -4,8 +4,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public class DiskCache<K> extends Cache<K, Object>
+public class DiskCache<K> implements Cache<K, Object>
 {
+    private Strategy strategy;
+    private int capacity;
     private String basePath;
     private MemCache<K, Path> memCache;
 
@@ -16,9 +18,9 @@ public class DiskCache<K> extends Cache<K, Object>
      * @param capacity Cache capacity
      * @param basePath Directory name for storing cached elements
      */
-    public static <K> DiskCache<K> create( Cache.Strategy strategy, int capacity, String basePath ) throws IOException
+    public static <K> DiskCache<K> create( Strategy strategy, int capacity, String basePath ) throws IOException
     {
-        DiskCache<K> cache = new DiskCache<>( capacity, basePath );
+        DiskCache<K> cache = new DiskCache<>( strategy, capacity, basePath );
         cache.memCache = new MemCache<K, Path>( strategy, capacity )
         {
             @Override
@@ -55,15 +57,28 @@ public class DiskCache<K> extends Cache<K, Object>
         return Integer.toHexString( key.hashCode() );
     }
 
-    public DiskCache( int capacity, String basePath )
+    public DiskCache( Strategy strategy, int capacity, String basePath )
     {
-        super( capacity );
+        this.strategy = strategy;
+        this.capacity = capacity;
         this.basePath = basePath;
     }
 
     public Path getPath( K key )
     {
         return Paths.get( basePath, getFileName( key ) );
+    }
+
+    @Override
+    public Strategy getStrategy()
+    {
+        return strategy;
+    }
+
+    @Override
+    public int getCapacity()
+    {
+        return capacity;
     }
 
     @Override
@@ -92,7 +107,7 @@ public class DiskCache<K> extends Cache<K, Object>
     @Override
     public Object put( K key, Object val )
     {
-        Path path = Paths.get( basePath, getFileName( key ) );
+        Path path = getPath( key );
         try {
             FileOutputStream file = new FileOutputStream( path.toFile() );
             ObjectOutputStream out = new ObjectOutputStream( file );
@@ -107,17 +122,24 @@ public class DiskCache<K> extends Cache<K, Object>
     }
 
     @Override
+    public boolean remove( K key )
+    {
+        return removeFile( key ) && memCache.remove( key );
+    }
+
+    @Override
     public boolean containsKey( K key )
     {
         return memCache.containsKey( key );
     }
 
-    private void removeFile( K key )
+    private boolean removeFile( K key )
     {
         try {
-            Files.deleteIfExists( getPath( key ) );
+            return Files.deleteIfExists( getPath( key ) );
         } catch( IOException e ) {
             e.printStackTrace();
+            return false;
         }
     }
 }

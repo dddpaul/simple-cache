@@ -1,47 +1,21 @@
-import java.util.Map;
-
-public abstract class Cache<K, V>
+public interface Cache<K, V>
 {
-    public static enum Strategy
+    public enum Strategy
     {
         LRU, MRU
     }
 
-    protected Map<K, V> data;
-    protected int capacity;
+    public Strategy getStrategy();
 
-    public Cache( int capacity )
-    {
-        this.capacity = capacity;
-    }
+    public int getCapacity();
 
-    public int getCapacity()
-    {
-        return capacity;
-    }
+    public int getSize();
 
-    public int getSize()
-    {
-        return data.size();
-    }
+    public V get( K key );
 
-    public V get( K key )
-    {
-        return data.get( key );
-    }
+    public V put( K key, V val );
 
-    public V put( K key, V val )
-    {
-        return data.put( key, val );
-    }
+    public boolean remove( K key );
 
-    public V remove( K key )
-    {
-        return data.remove( key );
-    }
-
-    public boolean containsKey( K key )
-    {
-        return data.containsKey( key );
-    }
+    public boolean containsKey( K key );
 }

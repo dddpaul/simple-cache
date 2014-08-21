@@ -2,8 +2,12 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class MemCache<K, V> extends Cache<K, V>
+public class MemCache<K, V> implements Cache<K, V>
 {
+    private Strategy strategy;
+    private int capacity;
+    private Map<K, V> data;
+
     /**
      * Creates LRU/MRU cache instance based on {@link LinkedHashMap}.
      *
@@ -11,14 +15,15 @@ public class MemCache<K, V> extends Cache<K, V>
      * @param capacity Cache capacity
      * @see <a href="http://www.javaspecialist.ru/2012/02/java-lru-cache.html">Java LRU cache</a>
      */
-    public static <K, V> MemCache<K, V> create( Cache.Strategy strategy, int capacity )
+    public static <K, V> MemCache<K, V> create( Strategy strategy, int capacity )
     {
         return new MemCache<>( strategy, capacity );
     }
 
-    public MemCache( Cache.Strategy strategy, int capacity )
+    public MemCache( Strategy strategy, int capacity )
     {
-        super( capacity );
+        this.strategy = strategy;
+        this.capacity = capacity;
         data = new LinkedHashMap<K, V>( capacity, 1, true )
         {
             @Override
@@ -38,7 +43,7 @@ public class MemCache<K, V> extends Cache<K, V>
      * @param strategy Cache strategy
      * @return <tt>true</tt> if the eldest entry should be removed from the map by {@link LinkedHashMap}
      */
-    public boolean removeEldestEntryImpl( Map.Entry<K, V> eldest, Cache.Strategy strategy )
+    public boolean removeEldestEntryImpl( Map.Entry<K, V> eldest, Strategy strategy )
     {
         if( getSize() > capacity ) {
             switch( strategy ) {
@@ -68,5 +73,47 @@ public class MemCache<K, V> extends Cache<K, V>
         }
         it.remove();
         return key;
+    }
+
+    @Override
+    public Strategy getStrategy()
+    {
+        return strategy;
+    }
+
+    @Override
+    public int getCapacity()
+    {
+        return capacity;
+    }
+
+    @Override
+    public int getSize()
+    {
+        return data.size();
+    }
+
+    @Override
+    public V get( K key )
+    {
+        return data.get( key );
+    }
+
+    @Override
+    public V put( K key, V val )
+    {
+        return data.put( key, val );
+    }
+
+    @Override
+    public boolean remove( K key )
+    {
+        return data.remove( key ) != null;
+    }
+
+    @Override
+    public boolean containsKey( K key )
+    {
+        return data.containsKey( key );
     }
 }
