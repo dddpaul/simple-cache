@@ -20,7 +20,7 @@ public class MemCache<K, V> implements Cache<K, V>
         return new MemCache<>( strategy, capacity );
     }
 
-    public MemCache( Strategy strategy, int capacity )
+    public MemCache( final Strategy strategy, int capacity )
     {
         this.strategy = strategy;
         this.capacity = capacity;

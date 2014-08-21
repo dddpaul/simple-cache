@@ -18,9 +18,9 @@ public class DiskCache<K> implements Cache<K, Object>
      * @param capacity Cache capacity
      * @param basePath Directory name for storing cached elements
      */
-    public static <K> DiskCache<K> create( Strategy strategy, int capacity, String basePath ) throws IOException
+    public static <K> DiskCache<K> create( Strategy strategy, final int capacity, String basePath ) throws IOException
     {
-        DiskCache<K> cache = new DiskCache<>( strategy, capacity, basePath );
+        final DiskCache<K> cache = new DiskCache<>( strategy, capacity, basePath );
         cache.memCache = new MemCache<K, Path>( strategy, capacity )
         {
             @Override

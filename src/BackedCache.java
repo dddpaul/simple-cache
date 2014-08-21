@@ -15,10 +15,11 @@ public class BackedCache<K> implements Cache<K, Object>
      * @param capacity2  Level-2 cache capacity
      * @param basePath  Directory name for storing cached elements
      */
-    public static <K> BackedCache<K> create( Strategy strategy, int capacity1, int capacity2, String basePath ) throws IOException
+    public static <K> BackedCache<K> create( Strategy strategy, final int capacity1, int capacity2, String basePath )
+            throws IOException
     {
         int capacity = capacity1 + capacity2;
-        BackedCache<K> cache = new BackedCache<>( strategy, capacity );
+        final BackedCache<K> cache = new BackedCache<>( strategy, capacity );
         cache.backingCache = DiskCache.create( strategy, capacity2, basePath );
         cache.frontCache = new MemCache<K, Object>( strategy, capacity1 )
         {
