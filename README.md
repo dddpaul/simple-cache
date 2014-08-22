@@ -1,5 +1,5 @@
 simple-cache
-===========
+============
 
 Simple two-level cache written in Java.
 
@@ -26,3 +26,11 @@ java -jar build/libs/simple-cache-{version}.jar [OPTIONS] <DIRECTORY>
  -d VAL         : level-2 cache directory (will be erased and recreated)
  -s [LRU | MRU] : cache strategy
 ```
+
+Links:
+* [Java LRU cache](http://www.javaspecialist.ru/2012/02/java-lru-cache.html)
+* [В чем преимущество LinkedHashMap перед HashMap?](http://javatalks.ru/topics/34786)
+* [Структуры данных в картинках. LinkedHashMap](http://habrahabr.ru/post/129037/)
+* [Intro to Caching,Caching algorithms and caching frameworks ](http://javalandscape.blogspot.ru/2009/01/cachingcaching-algorithms-and-caching.html)
+* [Implement Simple Threadsafe Cache using HashMap without using Synchronized Collection](http://crunchify.com/implement-simple-threadsafe-cache-using-hashmap-without-using-synchronized-collection/)
+* [JakeWharton/DiskLruCache](https://github.com/JakeWharton/DiskLruCache)
